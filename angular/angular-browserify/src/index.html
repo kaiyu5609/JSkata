@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html ng-app="NationalBasketballAssociation">
+    <head>
+        <meta charset="utf-8">
+        <title>NBA</title>
+        <link rel="stylesheet" href="../lib/bootstrap/dist/css/bootstrap.min.css" />
+        <link rel="stylesheet" href="./css/main.css" />
+    </head>
+    <body>
+
+        <div class="container" ng-controller="RocketCtrl">
+            <h5 class="container" ng-bind="name"></h5>
+
+            <div basketball-team></div>
+
+            <br /><hr />
+        </div>
+
+        <div class="container" ng-controller="WorriorCtrl">
+            <h5 class="container" ng-bind="name"></h5>
+
+            <div basketball-team></div>
+
+            <br /><hr />
+        </div>
+
+        <script type="text/javascript" src="../lib/angular/angular.min.js"></script>
+        <script type="text/javascript" src="../lib/jquery/dist/jquery.min.js"></script>
+        <script type="text/javascript" src="../lib/lodash/dist/lodash.min.js"></script>
+        <script type="text/javascript" src="./build/main.js"></script>
+    </body>
+</html>

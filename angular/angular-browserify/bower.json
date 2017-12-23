@@ -1,0 +1,24 @@
+{
+  "name": "angular-module",
+  "authors": [
+    "kaiyu5609 <1047935422@qq.com>"
+  ],
+  "description": "",
+  "main": "",
+  "license": "MIT",
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "devDependencies": {
+    "jquery": "^3.2.1",
+    "angular": "^1.6.8",
+    "lodash": "^4.17.4",
+    "bootstrap": "^3.3.7"
+  }
+}
