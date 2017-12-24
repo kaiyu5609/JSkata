@@ -2,3 +2,6 @@ button.close,
 button.btn.btn-primary {
     outline: none;
 }
+.active {
+    font-weight: bold;
+}

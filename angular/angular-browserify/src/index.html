@@ -6,25 +6,29 @@
         <link rel="stylesheet" href="../lib/bootstrap/dist/css/bootstrap.min.css" />
         <link rel="stylesheet" href="./css/main.css" />
     </head>
-    <body>
+    <body ng-controller="MainCtrl">
 
-        <div class="container" ng-controller="RocketCtrl">
-            <h5 class="container" ng-bind="name"></h5>
+        <ul class="nav nav-tabs">
+            <li role="presentation">
+                <a ui-sref="rocket({id: 1})" ui-sref-active="active">火箭</a>
+            </li>
+            <li role="presentation">
+                <a ui-sref="worrior({id: 2})" ui-sref-active="active">勇士</a>
+            </li>
+            <li role="presentation">
+                <a ui-sref="laker" ui-sref-active="active">湖人</a>
+            </li>
+        </ul>
 
-            <div basketball-team></div>
+        <div ui-view></div>
 
-            <br /><hr />
-        </div>
-
-        <div class="container" ng-controller="WorriorCtrl">
-            <h5 class="container" ng-bind="name"></h5>
-
-            <div basketball-team></div>
-
-            <br /><hr />
+        <div class="container" ng-controller="LakerCtrl">
+            <div laker name="name" job="IT" speak="speak({name, job})"></div>
         </div>
 
         <script type="text/javascript" src="../lib/angular/angular.min.js"></script>
+        <script type="text/javascript" src="../lib/angular-ui-router/release/angular-ui-router.min.js"></script>
+        <script type="text/javascript" src="../lib/oclazyload/dist/ocLazyLoad.min.js"></script>
         <script type="text/javascript" src="../lib/jquery/dist/jquery.min.js"></script>
         <script type="text/javascript" src="../lib/lodash/dist/lodash.min.js"></script>
         <script type="text/javascript" src="./build/main.js"></script>
