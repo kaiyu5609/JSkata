@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>d3-selection</title>
+    </head>
+    <body>
+
+        <div class="container">
+            <div class="row"></div>
+            <div class="row"></div>
+        </div>
+
+        <script type="text/javascript" src="../../dist/d3-selection.js"></script>
+        <script type="text/javascript">
+
+            console.log(d3);
+
+            // 1.select
+            // var container = d3.select('div.container');
+            // var row = container.select('div.row');
+            // var row2 = container.select('p.row');
+            //
+            // var r = row.select('span.row');
+            //
+            // console.log(container);
+            // console.log(row);
+            // console.log(row2);
+
+            // 2.selectAll
+            // var container = d3.select('div.container');
+            // var rows = container.selectAll('div.row');
+            //
+            // console.log(container);
+            // console.log(rows);
+
+            // 3.data
+            var container = d3.select('div.container');
+
+            function render(data) {
+                var rows = container.selectAll('div').data(data);
+
+                console.log(rows);
+
+                rows.text(function(d, i) {
+                    return d;
+                });
+
+                var enter = rows.enter();
+                enter.append('div').text(function(d, i) {
+                    return d;
+                });
+
+                console.log(enter);
+
+                var exit = rows.exit();
+
+                exit.remove();
+
+                console.log(exit);
+            }
+
+            render([1, 2, 3]);
+
+            setTimeout(function() {
+                render([0, 2, 3, 4, 5]);
+            }, 1000);
+
+
+
+        </script>
+    </body>
+</html>
