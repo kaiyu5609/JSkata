@@ -5,6 +5,226 @@
         <title>selection</title>
     </head>
     <body>
+        <div class="container">
+            <div class="row"></div>
+        </div>
 
+        <script type="text/javascript">
+
+            (function(window) {
+                var d3 = {};
+
+                var root = [null];
+
+                var selector = function(selector) {
+                    return function() {
+                        return this.querySelector(selector);
+                    };
+                };
+                var selectorAll = function(selector) {
+                    return function() {
+                        return this.querySelectorAll(selector);
+                    };
+                };
+
+                var enterNode = function(parent, datum) {
+                    return {
+                        _next: null,
+                        _parent: parent,
+                        __data__: datum,
+                        appendChild: function(child) {
+                            return this._parent.insertBefore(child, this._next);
+                        }
+                    };
+                };
+
+                var select = function(select) {
+                    if (typeof select !== "function") {
+                        select = selector(select);
+                    }
+                    var subgroups = this._groups.map(function(group, i) {
+                        var subnode;
+                        return group.map(function(node, j) {
+                            if (node && (subnode = select.call(node, node.__data__, j, group))) {
+                                if ("__data__" in node) {
+                                    subnode.__data__ = node.__data__;
+                                }
+                                return subnode;
+                            }
+                        });
+                    });
+                    return selection(subgroups, this._parents);
+                };
+                var selectAll = function(select) {
+                    if (typeof select !== "function") {
+                        select = selectorAll(select);
+                    }
+                    var subgroups = [], parents = [];
+                    this._groups.forEach(function(group, i) {
+                        group.forEach(function(node, j) {
+                            if (node) {
+                                subgroups.push(select.call(node, node.__data__, j, group));
+                                parents.push(node);
+                            }
+                        });
+                    });
+                    return selection(subgroups, parents);
+                };
+                var bindIndex = function(parent, group, enter, update, exit, data) {
+                    var i = 0, node, groupLength = group.length, dataLength = data.length;
+
+                    // 将 数据可绑定到 已存在的子节点 放进update中
+                    // 将 数据没有可绑定 的那些将要生成的 子节点 放进enter中
+                    // 将 未能绑定的数据 放进enter中
+                    for (; i < dataLength; i++) {
+                        if (node = group[i]) {// 子节点已存在
+                            node.__data__ = data[i];
+                            update[i] = node;
+                        } else {// 子节点未存在
+                            enter[i] = enterNode(parent, data[i]);
+                        }
+                    }
+
+                    // 将多余的节点 放进exit中
+                    for (; i < groupLength; i++) {
+                        if (node = group[i]) {
+                            exit[i] = node;
+                        }
+                    }
+                };
+                var data = function(data) {
+                    var groups = this._groups,
+                        parents = this._parents,
+                        dataLen = data.length;
+                    var update = [],
+                        enter = [],
+                        exit = [];
+
+                    groups.forEach(function(group, i) {
+                        var parent = parents[i],
+                            enterGroup = enter[i] = [],
+                            updateGroup = update[i] = [],
+                            exitGroup = exit[i] = [];
+
+                        bindIndex(parent, group, enterGroup, updateGroup, exitGroup, data);
+
+                        var k = 0, prev, next;
+                        data.forEach(function(d, j) {
+                            if (prev = enterGroup[j]) {
+                                if (j >= k) {
+                                    k = j + 1;
+                                }
+                                while (!(next = updateGroup[k]) && ++k < dataLen);
+                                prev._next = next || null;
+                            }
+                        });
+                    });
+                    update = selection(update, parents);
+                    update._enter = enter;
+                    update._exit = exit;
+                    return update;
+                };
+                var enter = function() {
+                    return selection(this._enter, this._parents);
+                };
+
+                var creator = function(name) {
+                    return function() {
+                        return document.createElement(name);
+                    };
+                };
+                var append = function(name) {
+                    var create = creator(name);
+                    return this.select(function() {
+                        return this.appendChild(create.apply(this, arguments));
+                    });
+                };
+                var exit = function() {
+                    return selection(this._exit, this._parents);
+                };
+                var each = function(callback) {
+                    this._groups.forEach(function(group, i) {
+                        group.forEach(function(node, j) {
+                            if (node) callback.call(node, node.__data__, j, group);
+                        });
+                    });
+                    return this;
+                };
+                var node = function() {
+                    this._groups.forEach(function(group, i) {
+                        group.forEach(function(node, j) {
+                            if (node) return node;
+                        });
+                    });
+                    return null;
+                };
+                var remove = function() {
+                    return this.each(function() {
+                        var parent = this.parentNode;
+                        if (parent) parent.removeChild(this);
+                    });
+                };
+                var text = function(value) {
+                    if (value) {
+                        return this.each(function() {
+                            var v = value.apply(this, arguments);
+                            this.textContent = v == null ? "" : v;
+                        });
+                    }
+                    var node = this.node();
+                    if (node) {
+                        return node.textContent;
+                    }
+                };
+
+                var selection = function(groups, parents) {
+                    return {
+                        _groups: groups,
+                        _parents: parents,
+                        select: select,
+                        selectAll: selectAll,
+                        data: data,
+                        enter: enter,
+                        append: append,
+                        exit: exit,
+                        remove: remove,
+                        each: each,
+                        node: node,
+                        text: text
+                    };
+                };
+
+                d3.select = function(selector) {
+                    console.log(selector);
+                    return selection([[document.querySelector(selector)]], [document.documentElement]);
+                };
+
+                window.d3 = d3;
+            })(window);
+
+
+            var container = d3.select('div.container');
+            console.log(container);
+
+            function render(data) {
+                var rows = container.selectAll('div');
+                console.log(rows);
+                var bindDataRows = rows.data(data);
+                console.log(bindDataRows);
+                bindDataRows.text(function(d) {
+                    return d;
+                });
+                bindDataRows.enter().append('div').text(function(d) {
+                    return d;
+                });
+                bindDataRows.exit().remove();
+            }
+
+            render([1, 2, 3]);
+
+            setTimeout(function() {
+                render([0, 2, 3, 4, 5]);
+            }, 1000);
+        </script>
     </body>
 </html>

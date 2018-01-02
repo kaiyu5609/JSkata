@@ -27,8 +27,8 @@ export default function(value) {
         } else {
             fnText = textConstant;
         }
-        this.each(fnText(value));
+        return this.each(fnText(value));
     } else {
-        this.node().textContent;
+        return this.node().textContent;
     }
 }

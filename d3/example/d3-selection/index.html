@@ -36,6 +36,7 @@
 
             // 3.data
             var container = d3.select('div.container');
+            console.log(container);
 
             function render(data) {
                 var rows = container.selectAll('div').data(data, function(d, i) {
