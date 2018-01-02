@@ -2,6 +2,8 @@ import { Selection } from "./index";
 import { EnterNode } from "./enter";
 import constant from "../constant";
 
+var keyPrefix = "$";
+
 /**
  * @method bindIndex
  * @param {Object} parent div.container
@@ -34,8 +36,54 @@ function bindIndex(parent, group, enter, update, exit, data) {
     }
 }
 
-function bindKey() {
+/**
+ * @method bindIndex
+ * @param {Object} parent div.container
+ * @param {NodeList} group [div.row, div.row]
+ * @param {Array} enter []
+ * @param {Array} update [] -> [div.row]
+ * @param {Array} exit []
+ * @param {Array} data [1, 2, 3, 4, 5]
+ */
+function bindKey(parent, group, enter, update, exit, data, key) {
+    var nodeByKeyValue = {},
+        keyValues = [],
+        keyValue;
 
+    // 为每个已存在的节点分配对应的可以，缓存起来，确保不重复
+    // 如果多个节点有相同的key，那个重复的节点会被放进exit中
+    group.forEach(function(node, i) {
+        if (node) {
+            keyValues[i] = keyValue = keyPrefix + key.call(node, node.__data__, i, group);
+            if (keyValue in nodeByKeyValue) {// 重复的节点放进exit中
+                exit[i] = node;
+            } else {
+                nodeByKeyValue[keyValue] = node;
+            }
+        }
+    });
+
+    // 通过数据生成的key，找出是否有某个节点跟这个数据是关联的
+    // 如果有一个节点关联了这个key，则将该数据挂到update中
+    // 如果没有或者这是一个重复的key，则将该数据挂到enter中
+    data.forEach(function(d, i) {
+        keyValue = keyPrefix + key.call(parent, d, i, data);
+        var node = nodeByKeyValue[keyValue];
+        if (node) {
+            update[i] = node;
+            node.__data__ = d;
+            nodeByKeyValue[keyValue] = null;
+        } else {
+            enter[i] = new EnterNode(parent, d);
+        }
+    });
+
+    // 将没有进行数据绑定的多余节点 放进exit中
+    group.forEach(function(node, i) {
+        if (node && (nodeByKeyValue[keyValues[i]] === node)) {
+            exit[i] = node;
+        }
+    });
 }
 
 
@@ -55,6 +103,13 @@ function bindKey() {
  * @return {Object} selection
  */
 export default function(value, key) {
+    if (!value) {
+        let data = [], i = -1;
+        this.each(function(d) {
+            data[++i] = d;
+        });
+        return data;
+    }
     var bind = key ? bindKey : bindIndex,
         groups = this._groups,
         parents = this._parents;
