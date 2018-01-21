@@ -32,6 +32,8 @@ define(function (require) {
         console.log('Hello, zrender!', params)
     });
 
+    console.log(zrender.Circle);
+
 
 
 

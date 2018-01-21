@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh">
+<head>
+	<meta charset="UTF-8">
+	<title>ZRender</title>
+	<style media="screen">
+		.wrapper {
+			height:180px;
+		}
+	</style>
+</head>
+<body>
+
+    <div id="main" class="wrapper"></div>
+
+	<script type="text/javascript" src="../node_modules/zrender/dist/zrender.js"></script>
+	<script type="text/javascript">
+		console.log(zrender);
+
+		var container = document.querySelector('#main');
+
+		var zr = zrender.init(container);
+
+		console.log(zr);
+
+		var circle = new zrender.Circle({
+			shape: {
+				cx: 100,
+				cy: 100,
+				r: 30
+			},
+			style: {
+				fill: '#0eaf52',
+				stroke: '#ffae00'
+			}
+		});
+
+		console.log(circle);
+
+		zr.add(circle);
+
+		setTimeout(function() {
+			circle.attr({
+				shape: {
+					cx: 150,
+					cy: 100,
+					r: 40
+				},
+				style: {
+					fill: 'red',
+					stroke: 'black'
+				}
+			});
+		}, 1000);
+
+	</script>
+</body>
+</html>
