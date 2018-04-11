@@ -1,12 +1,14 @@
 var path = require('path')
 
 var config = {
-	entry: [
-		path.resolve(__dirname, 'src/d3-selection/index.js')
-	],
+	entry: {
+		'd3-selection': path.resolve(__dirname, 'src/d3-selection/index.js'),
+		'd3-collection': path.resolve(__dirname, 'src/d3-collection/index.js'),
+		'd3-scale': path.resolve(__dirname, 'src/d3-scale/index.js')
+	},
 	output: {
 		path: path.resolve(__dirname, 'dist/'),
-		filename: 'd3-selection.js',
+		filename: '[name].js',
 		publicPath: 'dist',
 		library: 'd3'
 	},

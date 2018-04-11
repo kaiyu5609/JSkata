@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>d3-collection</title>
+    </head>
+    <body>
+
+        <div class="container">
+            <div class="row"></div>
+        </div>
+
+        <script type="text/javascript" src="../../dist/d3-collection.js"></script>
+        <script type="text/javascript">
+
+            console.log(d3);
+
+            // map
+            var origin = {
+                name: 'kaiyu',
+                age: '28',
+                sex: 'man'
+            };
+            // var origin = ['kaiyu', '28', 'man'];
+
+            var _map = d3.map(origin);
+            console.log(_map)
+            console.log(_map.has('name'))
+            console.log(_map.get('sex'))
+            console.log(_map.keys())
+            console.log(_map.values())
+            console.log(_map.entries())
+            console.log(_map.size())
+            console.log(_map.empty())
+            _map.each(function(d, i, o) {
+                console.log(d, i, o)
+            })
+
+
+
+
+
+        </script>
+    </body>
+</html>

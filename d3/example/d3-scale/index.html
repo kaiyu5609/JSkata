@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>d3-scale</title>
+    </head>
+    <body>
+
+        <div class="container">
+            <div class="row"></div>
+        </div>
+
+        <script type="text/javascript" src="../../dist/d3-scale.js"></script>
+        <script type="text/javascript">
+
+            console.log(d3);
+
+            // ordinal
+            var category = ['2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017', '2018'];
+
+            var ordinal = d3.scaleOrdinal()
+            .domain(category)
+            .range(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']);
+
+            console.log('domain', ordinal.domain());
+            console.log('range', ordinal.range());
+            console.log('unknown', ordinal.unknown());
+
+            category.forEach(function(d, i) {
+                console.log(d + ':', ordinal(d));
+            });
+
+
+
+
+
+        </script>
+    </body>
+</html>

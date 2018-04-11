@@ -31,3 +31,5 @@ npm-debug.log
 
 # dir
 public/lib/
+
+helper/lib/
