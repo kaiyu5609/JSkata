@@ -32,4 +32,7 @@ npm-debug.log
 # dir
 public/lib/
 
+d3/lib/
+d3/node_modules/
+
 helper/lib/
