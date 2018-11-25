@@ -1,0 +1,14 @@
+{
+  "name": "echarts",
+  "version": "1.0.0",
+  "description": "Enterprise Charts，基于Canvas，纯Javascript图表库，提供直观，生动，可交互，可个性化定制的数据统计图表。",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "zrender": "~2.0.2"
+  },
+  "author": "",
+  "license": "MIT"
+}
