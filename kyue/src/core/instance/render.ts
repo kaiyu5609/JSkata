@@ -32,6 +32,6 @@ export function initRender(vm: any) {
     const options = vm.$options
     const parentVnode = vm.$vnode = options._parentVnode
 
-    vm.$createElement = (a: any, b: any, c: any) => createElement(vm, a, b, c)
+    vm.$createElement = (a: any, b: any, c: any, d: any) => createElement(vm, a, b, c, d, true)
 }
 

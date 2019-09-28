@@ -15,7 +15,13 @@ export default class VNode {
     text: string;
     elm: any;
 
-    constructor(tag: any, data: any, children: any, text?: string, elm?: Element) {
+    constructor(
+        tag?: string, 
+        data?: any, 
+        children?: any, 
+        text?: string, 
+        elm?: Element
+    ) {
         this.tag = tag
         this.data = data
         this.children = children
@@ -23,4 +29,9 @@ export default class VNode {
         this.text =  text
         this.elm = elm
     }
+}
+
+
+export function createTextVNode (val: string | number) {
+    return new VNode(undefined, undefined, undefined, String(val))
 }

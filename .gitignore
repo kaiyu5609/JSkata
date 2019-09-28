@@ -32,9 +32,36 @@ npm-debug.log
 # dir
 public/lib/
 
+
+angular/test
+
+
+d3
 d3/lib/
 d3/node_modules/
 
+
+echarts
+
+
 helper/lib/
 
+
 gallery/lib/
+
+
+kgrid
+
+
+kgrid-build
+
+kyue/dist
+
+
+sankey
+
+
+zrender
+
+
+zrender_v1.0.0

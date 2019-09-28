@@ -1,4 +1,5 @@
 import VNode from "./vnode";
+import { isPrimitive, isDef, isTrue } from "../util/index";
 
 
 function emptyNodeAt(elm: Element) {
@@ -12,24 +13,35 @@ function createElm(vnode: any, insertedVnodeQueue: any, parentElm?: Element, ref
     const children = vnode.children
     const tag = vnode.tag
 
-    vnode.elm = vnode.ns
-        ? document.createElementNS(vnode.ns, tag)
-        : document.createElement(tag, vnode)
+    if (isDef(tag)) {
+        vnode.elm = vnode.ns
+            ? document.createElementNS(vnode.ns, tag)
+            : document.createElement(tag, vnode)
+    
+        createChildren(vnode, children, insertedVnodeQueue)
+    
+        if (data) {
+            setData(vnode, data);
+        }
 
-    createChildren(vnode, children, insertedVnodeQueue)
+        insert(parentElm, vnode.elm, refElm)
+    } else if (isTrue(vnode.isComment)) {
+        // 注释节点
 
-    if (data) {
-        setData(vnode, data);
+    } else {
+        // 文本节点
+        vnode.elm = document.createTextNode(vnode.text)
+        insert(parentElm, vnode.elm, refElm)
     }
 
-    insert(parentElm, vnode.elm, refElm)
 }
 
 function createChildren(vnode: any, children: [], insertedVnodeQueue: []) {
     if (Array.isArray(children)) {
-
-    } else {
-        // TODO 需要 normalize children
+        for (let i = 0; i < children.length; ++i) {
+            createElm(children[i], insertedVnodeQueue, vnode.elm, null)
+        }
+    } else if (isPrimitive(vnode.text)) {
         let text = String(vnode.text || vnode.children)
         vnode.elm.appendChild(document.createTextNode(text))
     }
