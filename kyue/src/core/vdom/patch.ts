@@ -36,7 +36,7 @@ function createElm(vnode: any, insertedVnodeQueue: any, parentElm?: Element, ref
 
 }
 
-function createChildren(vnode: any, children: [], insertedVnodeQueue: []) {
+function createChildren(vnode: VNode, children: [], insertedVnodeQueue: []) {
     if (Array.isArray(children)) {
         for (let i = 0; i < children.length; ++i) {
             createElm(children[i], insertedVnodeQueue, vnode.elm, null)

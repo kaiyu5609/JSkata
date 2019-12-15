@@ -27,10 +27,7 @@ function logger (module) {
     }
 }
 
-
-
-var vm = new Kyue({
-    el: '#app',
+var App =  new Kyue({
     data() {
         return {
             message: 'Hello Kyue!'
@@ -45,11 +42,18 @@ var vm = new Kyue({
     }
 })
 
+
+var vm = new Kyue({
+    el: '#app',
+    render(createElement) {
+        return createElement(App)
+    }
+})
+
 var log = logger('example')
 
 log('Kyue:', Kyue)
 log('vm:', vm)
-log('message:', vm.message)
 
 
 var time = 1

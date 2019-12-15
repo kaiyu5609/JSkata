@@ -1,4 +1,5 @@
 import VNode, { createTextVNode } from './vnode'
+import { createComponent } from './create-component'
 
 import {
     isPrimitive, isTrue
@@ -55,7 +56,12 @@ export function _createElement(
 
     let vnode
 
-    vnode = new VNode(tag, data, children)
+    if (typeof tag === 'string') {
+        vnode = new VNode(tag, data, children)
+    } else {
+        // 组件的options配置 / 构造函数
+        vnode = createComponent(tag, data, context, children)
+    }
 
     return vnode
 }

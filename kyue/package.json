@@ -45,5 +45,11 @@
     "webpack-dev-middleware": "^3.7.0",
     "webpack-dev-server": "^3.7.2",
     "webpack-hot-middleware": "^2.25.0"
-  }
+  },
+  "typings": "types/index.d.ts",
+  "files": [
+    "src",
+    "dist/*.js",
+    "types/*.d.ts"
+  ]
 }

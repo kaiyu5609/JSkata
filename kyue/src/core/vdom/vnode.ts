@@ -1,26 +1,23 @@
-/**
- * vnode
- * {
- *     tag: 'div',// 元素标签名称
- *     data: {
- *         attr: { id: 'app' }// 元素的数据
- *     },
- *     children: []// 子元素
- * }
- */
+
 export default class VNode {
-    tag: any;
+    tag: string | void;
     data: any;
     children: any;
     text: string;
     elm: any;
+    context: any;
+    componentOptions: any;
+    asyncFactory: any;
 
     constructor(
         tag?: string, 
         data?: any, 
         children?: any, 
         text?: string, 
-        elm?: Element
+        elm?: Element,
+        context?: any,
+        componentOptions?: any,
+        asyncFactory?: Function
     ) {
         this.tag = tag
         this.data = data
@@ -28,10 +25,20 @@ export default class VNode {
 
         this.text =  text
         this.elm = elm
+
+        this.context = context
+        this.componentOptions = componentOptions
+        this.asyncFactory = asyncFactory
     }
 }
 
 
 export function createTextVNode (val: string | number) {
     return new VNode(undefined, undefined, undefined, String(val))
+}
+
+export function cloneVNode (vnode: VNode): VNode {
+    const cloned = new VNode()
+
+    return cloned;
 }
