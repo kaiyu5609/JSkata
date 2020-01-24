@@ -27,14 +27,15 @@ function logger (module) {
     }
 }
 
-var App =  new Kyue({
+var App = Kyue.extend({
+    name: 'app',
     data() {
         return {
             message: 'Hello Kyue!'
         }
     },
-    render(createElement) {
-        return createElement('div', {
+    render(h) {
+        return h('div', {
             attrs: {
                 id: 'app'
             }
@@ -42,11 +43,10 @@ var App =  new Kyue({
     }
 })
 
-
 var vm = new Kyue({
     el: '#app',
-    render(createElement) {
-        return createElement(App)
+    render(h) {
+        return h(App)
     }
 })
 
@@ -56,9 +56,9 @@ log('Kyue:', Kyue)
 log('vm:', vm)
 
 
-var time = 1
-setInterval(() => {
-    time++
-    vm.message = 'Hello dhuang' + time
-    // vm.updateComponent()
-}, 1000)
+// var time = 1
+// setInterval(() => {
+//     time++
+//     vm.message = 'Hello dhuang' + time
+//     // vm.updateComponent()
+// }, 1000)

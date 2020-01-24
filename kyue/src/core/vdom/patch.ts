@@ -1,14 +1,20 @@
-import VNode from "./vnode";
-import { isPrimitive, isDef, isTrue } from "../util/index";
+import VNode from "./vnode"
+import { isPrimitive, isDef, isTrue, isUndef } from "../util/index"
 
 
 function emptyNodeAt(elm: Element) {
     return new VNode(elm.tagName.toLocaleLowerCase(), {}, [], undefined, elm)
 }
 
-function createElm(vnode: any, insertedVnodeQueue: any, parentElm?: Element, refElm?: Element) {
+function createElm(vnode: any, insertedVnodeQueue: [], parentElm?: Element, refElm?: Element) {
     console.log('createElm:', vnode)
 
+    /****组件的创建****/
+    if (createComponent(vnode, insertedVnodeQueue, parentElm, refElm)) {
+        return
+    }
+
+    /****普通节点的创建****/
     const data = vnode.data
     const children = vnode.children
     const tag = vnode.tag
@@ -93,10 +99,13 @@ function removeNode(el: Element) {
 
 
 export function patch(oldVnode: any, vnode: any, hydrating?: boolean, removeOnyl?: boolean) {
-    const insertedVnodeQueue: [] = [];
+    let isInitialPatch = false
+    const insertedVnodeQueue: [] = []
 
-    // 组件的 mount，生成一个新的root元素
-    if (typeof oldVnode === 'undefined') {
+    
+    if (isUndef(oldVnode)) {
+        // 组件的 mount，生成一个新的root元素
+        isInitialPatch = true
         createElm(vnode, insertedVnodeQueue)
     } else {
         const isRealElement = oldVnode.nodeType
@@ -129,4 +138,26 @@ export function patch(oldVnode: any, vnode: any, hydrating?: boolean, removeOnyl
     }
 
     return vnode.elm
+}
+
+
+function createComponent(vnode: any, insertedVnodeQueue: [], parentElm: any, refElm: any) {
+    let i = vnode.data
+    if (isDef(i)) {
+
+        if (isDef(i = i.hook) && isDef(i = i.init)) {
+            i(vnode, false)/* hydrating */
+        }
+
+        if (isDef(vnode.componentInstance)) {
+            initComponent(vnode, insertedVnodeQueue)
+            insert(parentElm, vnode.elm, refElm)
+            return true
+        }
+    }
+}
+
+function initComponent(vnode: any, insertedVnodeQueue: []) {
+    vnode.elm = vnode.componentInstance.$el
+
 }

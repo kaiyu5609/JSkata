@@ -57,9 +57,10 @@ export function _createElement(
     let vnode
 
     if (typeof tag === 'string') {
+        // 普通节点
         vnode = new VNode(tag, data, children)
     } else {
-        // 组件的options配置 / 构造函数
+        // 组件
         vnode = createComponent(tag, data, context, children)
     }
 

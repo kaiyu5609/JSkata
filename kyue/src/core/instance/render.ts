@@ -6,12 +6,11 @@ export function renderMixin(Kyue: any) {
         const vm = this
         const { render, _parentVnode } = vm.$options
 
-        // 初始化 _parentVnode 为 undefined
+        // 占位符vnode，初始化 _parentVnode 为 undefined
         vm.$vnode = _parentVnode
-        console.log('_render:', 'vm.$vnode = _parentVnodes (' + _parentVnode + ')')
+        console.log('_render:', 'vm.$vnode = _parentVnodes (' + (_parentVnode && _parentVnode.tag) + ')')
 
         let vnode
-
         try {
             vnode = render.call(vm, vm.$createElement)
         } catch (e) {
@@ -20,6 +19,7 @@ export function renderMixin(Kyue: any) {
 
         }
 
+        // 占位符vnode是渲染vnode的父级
         vnode.parent = _parentVnode
 
         return vnode

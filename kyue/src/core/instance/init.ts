@@ -5,17 +5,27 @@ import { initRender } from './render'
 let uid = 0
 
 export function initMixin(Kyue: any) {
-    Kyue.prototype._init = function(options?: Object) {
+    Kyue.prototype._init = function(options?: any) {
         console.log('_init:', 'vm\'s init')
 
         const vm = this
 
         vm._uid = uid++
+        
+        vm._isVue = true
 
+        if (options && options._isComponent) {
+            // 优化内部组件实例化，因为动态选项合并非常慢，并且没有内部组件选项需要特殊处理。
+            initInternalComponent(vm, options)
+        } else {
+            vm.$options = options
+        }
+
+        /**TODO**/
+        vm.$options._base = Kyue
+        /**TODO**/
+        
         vm._self = vm
-
-        vm.$options = options
-
         /**
          * 1、noop
          */
@@ -35,5 +45,22 @@ export function initMixin(Kyue: any) {
             vm.$mount(vm.$options.el)
         }
 
+    }
+}
+
+export function initInternalComponent(vm: any, options: any) {
+    const opts = vm.$options = Object.create(vm.constructor.options)
+    const parentVnode = options._parentVnode
+    opts.parent = options.parent
+    opts._parentVnode = parentVnode
+
+    const vnodeComponentOptions = parentVnode.componentOptions
+    opts.propsData = vnodeComponentOptions.propsData
+    opts._parentListeners = vnodeComponentOptions.listeners
+    opts._renderChildren = vnodeComponentOptions.children
+    opts._componentTag = vnodeComponentOptions.tag
+
+    if (options.render) {
+        opts.render = options.render
     }
 }

@@ -39,4 +39,45 @@ lifecycleMixin(Kyue)
 renderMixin(Kyue)
 
 
+/**
+ * 全局API
+ * 书写位置TODO
+ */ 
+Kyue.options = Object.create(null)
+Kyue.options._base = Kyue
+
+Kyue.cid = 0
+let cid = 1
+
+Kyue.extend = function(extendOptions: any): Function {
+    extendOptions = extendOptions || {}
+    const Super = this
+    const SuperId = Super.cid
+    const cachedCtors = extendOptions._Ctor || (extendOptions._Ctor = {})
+    if (cachedCtors[SuperId]) {
+        return cachedCtors[SuperId]
+    }
+
+    const name = extendOptions.name || Super.options.name
+
+    const Sub = function KyueComponent(options: any) {
+        this._init(options)
+    }
+    Sub.prototype = Object.create(Super.prototype)
+    Sub.prototype.constructor = Sub
+    Sub.cid = cid++
+    Sub.options = extendOptions// TODO
+    Sub.super = Super
+
+    Sub.extend = Super.extend
+
+    Sub.superOptions = Super.options
+    Sub.extendOptions = extendOptions
+    
+    // cache constructor
+    cachedCtors[SuperId] = Sub
+    return Sub
+}
+
+
 export default Kyue

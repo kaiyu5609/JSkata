@@ -1,7 +1,11 @@
+export let activeInstance: any = null
+
 export function lifecycleMixin(Kyue: any) {
     Kyue.prototype._update = function(vnode: any, hydrating?: boolean) {
         const vm = this
         const prevVnode = vm._vnode
+        const prevActiveInstance = activeInstance
+        activeInstance = vm
 
         vm._vnode = vnode
 
@@ -12,13 +16,23 @@ export function lifecycleMixin(Kyue: any) {
             // updates
             vm.$el = vm.__patch__(prevVnode, vnode)
         }
-
+        activeInstance = prevActiveInstance
 
     }
 }
 
 export function initLifecycle(vm: any) {
+    const options = vm.$options
 
+    let parent = options.parent
+    if (parent) {
+        parent.$children.push(vm)
+    }
+
+    vm.$parent = parent
+    vm.$root = parent ? parent.$root : vm
+
+    vm.$children = []
 }
 
 export function mountComponent(vm: any, el: Element, hydrating?: boolean) {

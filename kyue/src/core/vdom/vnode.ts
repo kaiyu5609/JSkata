@@ -1,4 +1,3 @@
-
 export default class VNode {
     tag: string | void;
     data: any;
@@ -7,7 +6,6 @@ export default class VNode {
     elm: any;
     context: any;
     componentOptions: any;
-    asyncFactory: any;
 
     constructor(
         tag?: string, 
@@ -17,7 +15,6 @@ export default class VNode {
         elm?: Element,
         context?: any,
         componentOptions?: any,
-        asyncFactory?: Function
     ) {
         this.tag = tag
         this.data = data
@@ -28,10 +25,8 @@ export default class VNode {
 
         this.context = context
         this.componentOptions = componentOptions
-        this.asyncFactory = asyncFactory
     }
 }
-
 
 export function createTextVNode (val: string | number) {
     return new VNode(undefined, undefined, undefined, String(val))
