@@ -1,6 +1,8 @@
 
 export * from '../../shared/util'
 export * from './debug'
+export * from './options'
+export * from './lang'
 
 /**
  * 选择元素

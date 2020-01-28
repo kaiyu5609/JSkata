@@ -1,6 +1,6 @@
 // @ts-nocheck
 
-import { warn, query } from '../util/index'
+import { warn, query, mergeOptions } from '../util/index'
 import { initMixin } from './init'
 import { lifecycleMixin, mountComponent } from './lifecycle'
 import { renderMixin } from './render'
@@ -66,7 +66,11 @@ Kyue.extend = function(extendOptions: any): Function {
     Sub.prototype = Object.create(Super.prototype)
     Sub.prototype.constructor = Sub
     Sub.cid = cid++
-    Sub.options = extendOptions// TODO
+    
+    Sub.options = mergeOptions(
+        Super.options,
+        extendOptions
+    )
     Sub.super = Super
 
     Sub.extend = Super.extend

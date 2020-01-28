@@ -1,3 +1,6 @@
+import Watcher from '../observer/watcher'
+import { noop } from '../util/index'
+
 export let activeInstance: any = null
 
 export function lifecycleMixin(Kyue: any) {
@@ -42,8 +45,12 @@ export function mountComponent(vm: any, el: Element, hydrating?: boolean) {
         vm._update(vm._render(), hydrating)
     }
 
+    new Watcher(vm, updateComponent, noop, {
+        before() {
+            console.log('----------before flushSchedulerQueue----------')
+        }
+    }, true)/* isRenderWatcher */
 
-    updateComponent()
 
     // km上其实没有该方法 TODO
     vm.updateComponent = updateComponent

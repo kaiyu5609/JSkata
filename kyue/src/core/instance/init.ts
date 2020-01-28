@@ -1,6 +1,7 @@
 import { initLifecycle } from './lifecycle'
 import { initState } from './state'
 import { initRender } from './render'
+import { mergeOptions } from '../util/index'
 
 let uid = 0
 
@@ -12,18 +13,18 @@ export function initMixin(Kyue: any) {
 
         vm._uid = uid++
         
-        vm._isVue = true
+        vm._isKyue = true
 
         if (options && options._isComponent) {
             // 优化内部组件实例化，因为动态选项合并非常慢，并且没有内部组件选项需要特殊处理。
             initInternalComponent(vm, options)
         } else {
-            vm.$options = options
+            vm.$options = mergeOptions(
+                resolveConstructorOptions(vm.constructor),
+                options || {},
+                vm
+            )
         }
-
-        /**TODO**/
-        vm.$options._base = Kyue
-        /**TODO**/
         
         vm._self = vm
         /**
@@ -63,4 +64,11 @@ export function initInternalComponent(vm: any, options: any) {
     if (options.render) {
         opts.render = options.render
     }
+}
+
+export function resolveConstructorOptions(Ctor: any) {
+    let options = Ctor.options
+
+
+    return options
 }

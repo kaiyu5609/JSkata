@@ -1,4 +1,5 @@
-import { noop } from "../util/index";
+import { noop } from '../util/index'
+import { observe } from '../observer/index'
 
 const sharedPropertyDefinition = {
     enumerable: true,
@@ -19,6 +20,9 @@ export function proxy(target: Object, sourceKey: string, key: string) {
 
 
 export function initState(vm: any) {
+    // 初始化vm的监视器列表
+    vm._watchers = []
+
     const opts = vm.$options
 
     if (opts.data) {
@@ -42,8 +46,8 @@ function initData(vm: any) {
         proxy(vm, `_data`, key)
     }
 
-    // TODO observe data
-    // ...
+    // observe data
+    observe(data, true)/* asRootData */
 }
 
 export function getData(data: Function, vm: any): any {

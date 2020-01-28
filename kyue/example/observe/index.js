@@ -45,6 +45,11 @@ var App = Kyue.extend({
 
 var vm = new Kyue({
     el: '#app',
+    data() {
+        return {
+            name: 'my name is app'
+        }
+    },
     render(h) {
         return h(App)
     }
