@@ -8,7 +8,7 @@ export function renderMixin(Kyue: any) {
 
         // 占位符vnode，初始化 _parentVnode 为 undefined
         vm.$vnode = _parentVnode
-        console.log('_render:', 'vm.$vnode = _parentVnodes (' + (_parentVnode && _parentVnode.tag) + ')')
+        // console.log('_render:', 'vm.$vnode = _parentVnodes (' + (_parentVnode && _parentVnode.tag) + ')')
 
         let vnode
         try {

@@ -1,9 +1,19 @@
-import VNode from "./vnode"
-import { isPrimitive, isDef, isTrue, isUndef } from "../util/index"
+import VNode from './vnode'
+import { isPrimitive, isDef, isTrue, isUndef } from '../util/index'
 
 
 function emptyNodeAt(elm: Element) {
     return new VNode(elm.tagName.toLocaleLowerCase(), {}, [], undefined, elm)
+}
+
+// TODO
+function sameVnode(a: any, b: any) {
+    return (
+        a.key === b.key && (
+            a.tag === b.tag && 
+            isDef(a.data) === isDef(b.data) 
+        )
+    )
 }
 
 function createElm(vnode: any, insertedVnodeQueue: [], parentElm?: Element, refElm?: Element) {
@@ -75,11 +85,28 @@ function insert(parent: Element, elm: Element, ref: Element) {
     }
 }
 
+function addVnodes(
+    parentElm: Element, 
+    refElm: Element, 
+    vnodes: Array<VNode>, 
+    startIdx: number,
+    endIdx: number,
+    insertedVnodeQueue: []
+) {
+    for (; startIdx <= endIdx; ++startIdx) {
+        createElm(
+            vnodes[startIdx], 
+            insertedVnodeQueue,
+            refElm
+        )
+    }
+}
+
 function removeVnodes(vnodes: any, startIdx: number, endIdx: number) {
     for (; startIdx <= endIdx; ++startIdx) {
         const ch = vnodes[startIdx]
-        if (ch) {
-            if (ch.tag) {
+        if (isDef(ch)) {
+            if (isDef(ch.tag)) {
                 // TODO
                 removeNode(ch.elm)
             } else {// Text node
@@ -92,8 +119,137 @@ function removeVnodes(vnodes: any, startIdx: number, endIdx: number) {
 function removeNode(el: Element) {
     const parent = el.parentNode
 
-    if (parent) {
+    if (isDef(parent)) {
         parent.removeChild(el)
+    }
+}
+
+
+
+
+
+function updateChildren(parentElm: Element, oldCh: any, newCh: any, insertedVnodeQueue: [], removeOnly?: boolean) {
+    let oldStartIdx = 0
+    let oldEndIdx = oldCh.length - 1
+    let oldStartVnode = oldCh[0]
+    let oldEndVnode = oldCh[oldEndIdx]
+
+    let newStartIdx = 0
+    let newEndIdx = newCh.length - 1
+    let newStartVnode = newCh[0]
+    let newEndVnode = newCh[newEndIdx]
+
+    let refElm
+
+    let index = 0
+    const COUNT = 100
+
+    const canMove = !removeOnly
+
+    while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
+        index++
+
+        if (index > COUNT) {
+            break;
+        }
+
+        if (isUndef(oldStartVnode)) {
+            oldStartVnode = oldCh[++oldStartIdx]
+        } else if (isUndef(oldEndVnode)) {
+            oldEndVnode = oldCh[--oldEndIdx]
+        } else if (sameVnode(oldStartVnode, newStartVnode)) {
+            // 两个新旧开始 相同的节点
+            patchVnode(oldStartVnode, newStartVnode, insertedVnodeQueue)
+            oldStartVnode = oldCh[++oldStartIdx]
+            newStartVnode = newCh[++newStartIdx]
+        } else if (sameVnode(oldEndVnode, newEndVnode)) {
+            // TODO
+
+
+        } else if (sameVnode(oldStartVnode, newEndVnode)) {
+            // TODO
+
+
+        } else if (sameVnode(oldEndVnode, newStartVnode)) {
+            // TODO
+
+
+        } else {
+            /**
+             * 重复利用子节点
+             * TODO
+             */
+        }
+    }
+
+    /**
+     * 新增的节点
+     */
+    if (oldStartIdx > oldEndIdx) {
+        refElm = isUndef(newCh[newEndIdx + 1]) ? null : newCh[newEndIdx + 1].elm
+        addVnodes(parentElm, refElm, newCh, newStartIdx, newEndIdx, insertedVnodeQueue)
+    } else if (newStartIdx > newEndIdx) {
+        removeVnodes(oldCh, oldStartIdx, oldEndIdx)
+    }
+}
+
+function patchVnode(
+    oldVnode: VNode,
+    vnode: VNode,
+    insertedVnodeQueue: [],
+    removeOnly?: boolean
+) {
+    if (oldVnode === vnode) {
+        return
+    }
+
+    const elm = vnode.elm = oldVnode.elm
+
+
+    let i
+    const data = vnode.data
+
+    /**
+     * 执行钩子函数
+     */
+    if (isDef(data) && isDef(i = data.hook) && isDef(i = i.prepatch)) {
+        i(oldVnode, vnode)
+    }
+
+    const oldCh = oldVnode.children
+    const ch = vnode.children
+
+    /*******************************/
+    /**
+     * 执行update的钩子函数
+     * TODO
+     */
+    /*******************************/
+
+
+    if (isUndef(vnode.text)) {
+        if (isDef(oldCh) && isDef(ch)) {
+            if (oldCh !== ch) updateChildren(elm, oldCh, ch, insertedVnodeQueue, removeOnly)
+        } else if (isDef(ch)) {
+            // TODO
+
+
+        } else if (isDef(oldCh)) {
+            // TODO
+
+
+        } else if (isDef(oldVnode.text)) {
+            elm.textContent = ''
+        }
+    } else if (oldVnode.text !== vnode.text) {
+        elm.textContent = vnode.text
+    }
+
+    /**
+     * 执行钩子函数
+     */
+    if (isDef(data)) {
+        if (isDef(i = data.hook) && isDef(i = i.postpatch)) i(oldVnode, vnode)
     }
 }
 
@@ -108,14 +264,12 @@ export function patch(oldVnode: any, vnode: any, hydrating?: boolean, removeOnyl
         isInitialPatch = true
         createElm(vnode, insertedVnodeQueue)
     } else {
-        const isRealElement = oldVnode.nodeType
+        const isRealElement = isDef(oldVnode.nodeType)
 
-        // TODO sameVnode(oldVnode, vnode)
-        if (!isRealElement) {
-            console.log('patch.update:', 'sameVnode')
-
-
-
+        if (!isRealElement && sameVnode(oldVnode, vnode)) {
+            console.log('Update:', 'patchVnode')
+            patchVnode(oldVnode, vnode, insertedVnodeQueue, removeOnyl)
+            console.log('----------Updated----------')
         } else {
             if (isRealElement) {
                 oldVnode = emptyNodeAt(oldVnode)

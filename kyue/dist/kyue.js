@@ -1262,14 +1262,13 @@
         };
         new Watcher(vm, updateComponent, noop, {
             before: function () {
-                console.log('----------before flushSchedulerQueue----------');
+                // console.log('----------before flushSchedulerQueue----------')
             }
         }, true); /* isRenderWatcher */
         // km上其实没有该方法 TODO
         vm.updateComponent = updateComponent;
         return vm;
     }
-    //# sourceMappingURL=lifecycle.js.map
 
     var VNode = /** @class */ (function () {
         function VNode(tag, data, children, text, elm, context, componentOptions) {
@@ -1648,7 +1647,7 @@
             var _a = vm.$options, render = _a.render, _parentVnode = _a._parentVnode;
             // 占位符vnode，初始化 _parentVnode 为 undefined
             vm.$vnode = _parentVnode;
-            console.log('_render:', 'vm.$vnode = _parentVnodes (' + (_parentVnode && _parentVnode.tag) + ')');
+            // console.log('_render:', 'vm.$vnode = _parentVnodes (' + (_parentVnode && _parentVnode.tag) + ')')
             var vnode;
             try {
                 vnode = render.call(vm, vm.$createElement);
@@ -1726,6 +1725,11 @@
     function emptyNodeAt(elm) {
         return new VNode(elm.tagName.toLocaleLowerCase(), {}, [], undefined, elm);
     }
+    // TODO
+    function sameVnode(a, b) {
+        return (a.key === b.key && (a.tag === b.tag &&
+            isDef(a.data) === isDef(b.data)));
+    }
     function createElm(vnode, insertedVnodeQueue, parentElm, refElm) {
         console.log('createElm:', vnode);
         /****组件的创建****/
@@ -1785,11 +1789,16 @@
             }
         }
     }
+    function addVnodes(parentElm, refElm, vnodes, startIdx, endIdx, insertedVnodeQueue) {
+        for (; startIdx <= endIdx; ++startIdx) {
+            createElm(vnodes[startIdx], insertedVnodeQueue, refElm);
+        }
+    }
     function removeVnodes(vnodes, startIdx, endIdx) {
         for (; startIdx <= endIdx; ++startIdx) {
             var ch = vnodes[startIdx];
-            if (ch) {
-                if (ch.tag) {
+            if (isDef(ch)) {
+                if (isDef(ch.tag)) {
                     // TODO
                     removeNode(ch.elm);
                 }
@@ -1801,8 +1810,95 @@
     }
     function removeNode(el) {
         var parent = el.parentNode;
-        if (parent) {
+        if (isDef(parent)) {
             parent.removeChild(el);
+        }
+    }
+    function updateChildren(parentElm, oldCh, newCh, insertedVnodeQueue, removeOnly) {
+        var oldStartIdx = 0;
+        var oldEndIdx = oldCh.length - 1;
+        var oldStartVnode = oldCh[0];
+        var oldEndVnode = oldCh[oldEndIdx];
+        var newStartIdx = 0;
+        var newEndIdx = newCh.length - 1;
+        var newStartVnode = newCh[0];
+        var newEndVnode = newCh[newEndIdx];
+        var refElm;
+        var index = 0;
+        var COUNT = 100;
+        while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
+            index++;
+            if (index > COUNT) {
+                break;
+            }
+            if (isUndef(oldStartVnode)) {
+                oldStartVnode = oldCh[++oldStartIdx];
+            }
+            else if (isUndef(oldEndVnode)) {
+                oldEndVnode = oldCh[--oldEndIdx];
+            }
+            else if (sameVnode(oldStartVnode, newStartVnode)) {
+                // 两个新旧开始 相同的节点
+                patchVnode(oldStartVnode, newStartVnode, insertedVnodeQueue);
+                oldStartVnode = oldCh[++oldStartIdx];
+                newStartVnode = newCh[++newStartIdx];
+            }
+            else if (sameVnode(oldEndVnode, newEndVnode)) ;
+            else if (sameVnode(oldStartVnode, newEndVnode)) ;
+            else if (sameVnode(oldEndVnode, newStartVnode)) ;
+        }
+        /**
+         * 新增的节点
+         */
+        if (oldStartIdx > oldEndIdx) {
+            refElm = isUndef(newCh[newEndIdx + 1]) ? null : newCh[newEndIdx + 1].elm;
+            addVnodes(parentElm, refElm, newCh, newStartIdx, newEndIdx, insertedVnodeQueue);
+        }
+        else if (newStartIdx > newEndIdx) {
+            removeVnodes(oldCh, oldStartIdx, oldEndIdx);
+        }
+    }
+    function patchVnode(oldVnode, vnode, insertedVnodeQueue, removeOnly) {
+        if (oldVnode === vnode) {
+            return;
+        }
+        var elm = vnode.elm = oldVnode.elm;
+        var i;
+        var data = vnode.data;
+        /**
+         * 执行钩子函数
+         */
+        if (isDef(data) && isDef(i = data.hook) && isDef(i = i.prepatch)) {
+            i(oldVnode, vnode);
+        }
+        var oldCh = oldVnode.children;
+        var ch = vnode.children;
+        /*******************************/
+        /**
+         * 执行update的钩子函数
+         * TODO
+         */
+        /*******************************/
+        if (isUndef(vnode.text)) {
+            if (isDef(oldCh) && isDef(ch)) {
+                if (oldCh !== ch)
+                    updateChildren(elm, oldCh, ch, insertedVnodeQueue);
+            }
+            else if (isDef(ch)) ;
+            else if (isDef(oldCh)) ;
+            else if (isDef(oldVnode.text)) {
+                elm.textContent = '';
+            }
+        }
+        else if (oldVnode.text !== vnode.text) {
+            elm.textContent = vnode.text;
+        }
+        /**
+         * 执行钩子函数
+         */
+        if (isDef(data)) {
+            if (isDef(i = data.hook) && isDef(i = i.postpatch))
+                i(oldVnode, vnode);
         }
     }
     function patch(oldVnode, vnode, hydrating, removeOnyl) {
@@ -1811,10 +1907,11 @@
             createElm(vnode, insertedVnodeQueue);
         }
         else {
-            var isRealElement = oldVnode.nodeType;
-            // TODO sameVnode(oldVnode, vnode)
-            if (!isRealElement) {
-                console.log('patch.update:', 'sameVnode');
+            var isRealElement = isDef(oldVnode.nodeType);
+            if (!isRealElement && sameVnode(oldVnode, vnode)) {
+                console.log('Update:', 'patchVnode');
+                patchVnode(oldVnode, vnode, insertedVnodeQueue);
+                console.log('----------Updated----------');
             }
             else {
                 if (isRealElement) {

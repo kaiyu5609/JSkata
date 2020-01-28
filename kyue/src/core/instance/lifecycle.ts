@@ -47,7 +47,7 @@ export function mountComponent(vm: any, el: Element, hydrating?: boolean) {
 
     new Watcher(vm, updateComponent, noop, {
         before() {
-            console.log('----------before flushSchedulerQueue----------')
+            // console.log('----------before flushSchedulerQueue----------')
         }
     }, true)/* isRenderWatcher */
 
