@@ -46,6 +46,17 @@
         return _toString.call(obj) === '[object Object]';
     }
     /**
+     * 将值转换为实际呈现的字符串
+     * @param val
+     */
+    function toString(val) {
+        return val == null
+            ? ''
+            : Array.isArray(val) || (isPlainObject(val) && val.toString === _toString)
+                ? JSON.stringify(val, null, 2)
+                : String(val);
+    }
+    /**
      * 从数组中删除项目
      * @param arr
      * @param item
@@ -76,7 +87,21 @@
         }
         return ret;
     }
+    /**
+     * 将属性混合到目标对象中
+     * @param to
+     * @param from
+     */
+    function extend(to, from) {
+        for (var key in from) {
+            to[key] = from[key];
+        }
+        return to;
+    }
     function noop(a, b, c) { }
+    var bind = function (fn, ctx) {
+        return fn.bind(ctx);
+    };
     //# sourceMappingURL=util.js.map
 
     var warn = noop;
@@ -126,6 +151,10 @@
     }
     //# sourceMappingURL=options.js.map
 
+    /**
+     * 用于解析html标签，组件名称和属性路径的unicode字母。
+     */
+    var unicodeRegExp = /a-zA-Z\u00B7\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u037D\u037F-\u1FFF\u200C-\u200D\u203F-\u2040\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD/;
     /**
      * Define a property
      */
@@ -1260,15 +1289,17 @@
         var updateComponent = function () {
             vm._update(vm._render(), hydrating);
         };
+        // updateComponent()
         new Watcher(vm, updateComponent, noop, {
             before: function () {
                 // console.log('----------before flushSchedulerQueue----------')
             }
         }, true); /* isRenderWatcher */
         // km上其实没有该方法 TODO
-        vm.updateComponent = updateComponent;
+        // vm.updateComponent = updateComponent
         return vm;
     }
+    //# sourceMappingURL=lifecycle.js.map
 
     var VNode = /** @class */ (function () {
         function VNode(tag, data, children, text, elm, context, componentOptions) {
@@ -1282,6 +1313,12 @@
         }
         return VNode;
     }());
+    var createEmptyVNode = function (text) {
+        if (text === void 0) { text = ''; }
+        var node = new VNode();
+        node.text = text;
+        return node;
+    };
     function createTextVNode(val) {
         return new VNode(undefined, undefined, undefined, String(val));
     }
@@ -1488,6 +1525,9 @@
         // 初始化vm的监视器列表
         vm._watchers = [];
         var opts = vm.$options;
+        if (opts.methods) {
+            initMethods(vm, opts.methods);
+        }
         if (opts.data) {
             initData(vm);
         }
@@ -1513,6 +1553,11 @@
             return {};
         }
         finally {
+        }
+    }
+    function initMethods(vm, methods) {
+        for (var key in methods) {
+            vm[key] = typeof methods[key] !== 'function' ? noop : bind(methods[key], vm);
         }
     }
     //# sourceMappingURL=state.js.map
@@ -1580,6 +1625,7 @@
         merged._merged = true;
         return merged;
     }
+    //# sourceMappingURL=create-component.js.map
 
     var SIMPLE_NORMALIZE = 1;
     var ALWAYS_NORMALIZE = 2;
@@ -1641,7 +1687,34 @@
     }
     //# sourceMappingURL=create-element.js.map
 
+    // k-for
+    function renderList(val, render) {
+        var ret, i, l;
+        if (Array.isArray(val) || typeof val === 'string') {
+            ret = new Array(val.length);
+            for (i = 0, l = val.length; i < l; i++) {
+                ret[i] = render(val[i], i);
+            }
+        }
+        // TODO
+        if (!isDef(ret)) {
+            return [];
+        }
+        ret._isKyList = true;
+        return ret;
+    }
+    //# sourceMappingURL=render-list.js.map
+
+    function installRenderHelpers(target) {
+        target._s = toString;
+        target._l = renderList;
+        target._v = createTextVNode;
+        target._e = createEmptyVNode;
+    }
+    //# sourceMappingURL=index.js.map
+
     function renderMixin(Kyue) {
+        installRenderHelpers(Kyue.prototype);
         Kyue.prototype._render = function () {
             var vm = this;
             var _a = vm.$options, render = _a.render, _parentVnode = _a._parentVnode;
@@ -1665,6 +1738,7 @@
         vm._vnode = null;
         var options = vm.$options;
         var parentVnode = vm.$vnode = options._parentVnode;
+        vm._c = function (a, b, c, d) { return createElement(vm, a, b, c, d, false); };
         vm.$createElement = function (a, b, c, d) { return createElement(vm, a, b, c, d, true); };
     }
     //# sourceMappingURL=render.js.map
@@ -1721,7 +1795,83 @@
         var options = Ctor.options;
         return options;
     }
+    //# sourceMappingURL=init.js.map
 
+    function createFnInvoker(fns) {
+        function invoker() {
+            var fns = invoker.fns;
+            if (Array.isArray(fns)) {
+                var cloned = fns.slice();
+                for (var i = 0; i < cloned.length; i++) {
+                    cloned[i].apply(null, arguments);
+                }
+            }
+            else {
+                return fns.apply(null, arguments);
+            }
+        }
+        invoker.fns = fns;
+        return invoker;
+    }
+    var normalizeEvent = function (name) {
+        return {
+            name: name
+        };
+    };
+    function updateListeners(on, oldOn, add, remove, vm) {
+        var name, def, cur, old, event;
+        for (name in on) {
+            def = cur = on[name];
+            old = oldOn[name];
+            event = normalizeEvent(name);
+            if (isUndef(cur)) ;
+            else if (isUndef(old)) {
+                if (isUndef(cur.fns)) {
+                    cur = on[name] = createFnInvoker(cur);
+                }
+                add(event.name, cur);
+            }
+            else if (cur !== old) {
+                old.fns = cur;
+                on[name] = old;
+            }
+        }
+        for (name in oldOn) {
+            if (isUndef(on[name])) {
+                event = normalizeEvent(name);
+                remove(event.name, oldOn.name);
+            }
+        }
+    }
+    //# sourceMappingURL=update-listeners.js.map
+
+    var target;
+    function add(event, handler) {
+        // TODO
+        target.addEventListener(event, handler, false);
+    }
+    function remove$1(event, handler) {
+        // TODO
+        target.removeEventListener(event, handler, false);
+    }
+    function updateDOMListeners(oldVnode, vnode) {
+        if (isUndef(oldVnode.data.on) && isUndef(vnode.data.on)) {
+            return;
+        }
+        var on = vnode.data.on || {};
+        var oldOn = oldVnode.data.on || {};
+        target = vnode.elm;
+        // TODO
+        updateListeners(on, oldOn, add, remove$1, vnode.context);
+        target = undefined;
+    }
+    var events = {
+        create: updateDOMListeners,
+        update: updateDOMListeners
+    };
+    //# sourceMappingURL=events.js.map
+
+    var emptyNode = new VNode('', {}, []);
     function emptyNodeAt(elm) {
         return new VNode(elm.tagName.toLocaleLowerCase(), {}, [], undefined, elm);
     }
@@ -1741,12 +1891,11 @@
         var children = vnode.children;
         var tag = vnode.tag;
         if (isDef(tag)) {
-            vnode.elm = vnode.ns
-                ? document.createElementNS(vnode.ns, tag)
-                : document.createElement(tag, vnode);
+            vnode.elm = document.createElement(tag);
             createChildren(vnode, children, insertedVnodeQueue);
             if (data) {
                 setData(vnode, data);
+                invokeCreateHooks(vnode);
             }
             insert(parentElm, vnode.elm, refElm);
         }
@@ -1814,6 +1963,12 @@
             parent.removeChild(el);
         }
     }
+    function isPatchable(vnode) {
+        while (vnode.componentInstance) {
+            vnode = vnode.componentInstance._vnode;
+        }
+        return isDef(vnode.tag);
+    }
     function updateChildren(parentElm, oldCh, newCh, insertedVnodeQueue, removeOnly) {
         var oldStartIdx = 0;
         var oldEndIdx = oldCh.length - 1;
@@ -1824,6 +1979,10 @@
         var newStartVnode = newCh[0];
         var newEndVnode = newCh[newEndIdx];
         var refElm;
+        /**
+         * TODO
+         * 删掉
+         */
         var index = 0;
         var COUNT = 100;
         while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
@@ -1878,6 +2037,12 @@
          * 执行update的钩子函数
          * TODO
          */
+        // 事件从新绑定
+        if (isDef(data) && isPatchable(vnode)) {
+            setTimeout(function () {
+                events.update(oldVnode, vnode);
+            }, 10);
+        }
         /*******************************/
         if (isUndef(vnode.text)) {
             if (isDef(oldCh) && isDef(ch)) {
@@ -1900,6 +2065,9 @@
             if (isDef(i = data.hook) && isDef(i = i.postpatch))
                 i(oldVnode, vnode);
         }
+    }
+    function invokeCreateHooks(vnode, insertedVnodeQueue) {
+        events.create(emptyNode, vnode);
     }
     function patch(oldVnode, vnode, hydrating, removeOnyl) {
         var insertedVnodeQueue = [];
@@ -1943,7 +2111,652 @@
     function initComponent(vnode, insertedVnodeQueue) {
         vnode.elm = vnode.componentInstance.$el;
     }
-    //# sourceMappingURL=patch.js.map
+
+    var attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/;
+    var dynamicArgAttribute = /^\s*((?:v-[\w-]+:|@|:|#)\[[^=]+\][^\s"'<>\/=]*)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/;
+    var ncname = "[a-zA-Z_][\\-\\.0-9_a-zA-Z" + unicodeRegExp.source + "]*";
+    var qnameCapture = "((?:" + ncname + "\\:)?" + ncname + ")";
+    var startTagOpen = new RegExp("^<" + qnameCapture);
+    var startTagClose = /^\s*(\/?)>/;
+    var endTag = new RegExp("^<\\/" + qnameCapture + "[^>]*>");
+    var shouldIgnoreFirstNewline = function (tag, html) { return tag && html[0] === '\n'; };
+    function parseHTML(html, options) {
+        var stack = [];
+        var index = 0;
+        var lastTag;
+        var MAX = 100;
+        var count = 0;
+        while (html) {
+            count++;
+            if (count > MAX) {
+                break;
+            }
+            // TODO
+            if (!lastTag || true) {
+                var textEnd = html.indexOf('<');
+                if (textEnd === 0) {
+                    // ③ step
+                    var endTagMatch = html.match(endTag);
+                    if (endTagMatch) {
+                        var curIndex = index;
+                        advance(endTagMatch[0].length);
+                        parseEndTag(endTagMatch[1], curIndex, index);
+                        continue;
+                    }
+                    // ① step
+                    var startTagMatch = parseStartTag();
+                    if (startTagMatch) {
+                        handleStartTag(startTagMatch);
+                        if (shouldIgnoreFirstNewline(startTagMatch.tagName, html)) {
+                            advance(1);
+                        }
+                        continue;
+                    }
+                }
+                var text = void 0;
+                // ② step
+                if (textEnd >= 0) {
+                    // TODO detail
+                    text = html.substring(0, textEnd);
+                }
+                if (textEnd < 0) {
+                    text = html;
+                }
+                if (text) {
+                    advance(text.length);
+                }
+                if (options.chars && text) {
+                    options.chars(text, index - text.length, index);
+                }
+            }
+        }
+        function advance(n) {
+            index += n;
+            html = html.substring(n);
+        }
+        /**
+         * 开始标签的解析
+         */
+        function parseStartTag() {
+            /**
+             * start: [ "<ul", "ul" ]
+             */
+            var start = html.match(startTagOpen);
+            if (start) {
+                var match = {
+                    tagName: start[1],
+                    attrs: [],
+                    start: index
+                };
+                advance(start[0].length);
+                var end = void 0, attr = void 0;
+                /**
+                 * 解析节点的属性
+                 * 1. 不是节点闭合标签
+                 * 2. 匹配动态属性表达式 或者是 静态属性表达式
+                 */
+                while (!(end = html.match(startTagClose)) &&
+                    (attr = html.match(dynamicArgAttribute) || html.match(attribute))) {
+                    /**
+                     * attr: [ " :class=\"bindClass\"", ":class", "=", "bindClass", null, null ]
+                     */
+                    attr.start = index;
+                    advance(attr[0].length);
+                    attr.end = index;
+                    match.attrs.push(attr);
+                }
+                /**
+                 * end: [ ">", "" ]
+                 */
+                if (end) {
+                    match.unarySlash = end[1];
+                    advance(end[0].length);
+                    match.end = index;
+                    return match;
+                }
+            }
+        }
+        function handleStartTag(match) {
+            var tagName = match.tagName;
+            var unarySlash = match.unarySlash;
+            // TODO
+            var unary = !!unarySlash;
+            var l = match.attrs.length;
+            var attrs = new Array(l);
+            for (var i = 0; i < l; i++) {
+                var args = match.attrs[i];
+                var value = args[3] || args[4] || args[5] || '';
+                attrs[i] = {
+                    name: args[1],
+                    value: value // decodeAttr
+                };
+            }
+            if (!unary) {
+                stack.push({
+                    tag: tagName,
+                    lowerCasedTag: tagName.toLowerCase(),
+                    attrs: attrs,
+                    start: match.start,
+                    end: match.end
+                });
+                lastTag = tagName;
+            }
+            /**
+             * 执行 options.start
+             * 构建AST树
+             */
+            if (options.start) {
+                options.start(tagName, attrs, unary, match.start, match.end);
+            }
+        }
+        function parseEndTag(tagName, start, end) {
+            var pos, lowerCasedTagName;
+            if (tagName) {
+                lowerCasedTagName = tagName.toLowerCase();
+                for (pos = stack.length - 1; pos >= 0; pos--) {
+                    if (stack[pos].lowerCasedTag === lowerCasedTagName) {
+                        break;
+                    }
+                }
+            }
+            else {
+                pos = 0;
+            }
+            if (pos >= 0) {
+                for (var i = stack.length - 1; i >= pos; i--) {
+                    if (options.end) {
+                        options.end(stack[i].tag, start, end);
+                    }
+                }
+                stack.length = pos;
+                lastTag = pos && stack[pos - 1].tag;
+            }
+        }
+    }
+    //# sourceMappingURL=html-parser.js.map
+
+    function getAndRemoveAttr(el, name, removeFromMap) {
+        var val;
+        if ((val = el.attrsMap[name]) != null) {
+            var list = el.attrsList;
+            for (var i = 0, l = list.length; i < l; i++) {
+                if (list[i].name === name) {
+                    list.splice(i, 1);
+                    break;
+                }
+            }
+        }
+        if (removeFromMap) {
+            delete el.attrsMap[name];
+        }
+        return val;
+    }
+    function getBindingAttr(el, name, getStatic) {
+        var dynamicValue = getAndRemoveAttr(el, ':' + name) || getAndRemoveAttr(el, 'k-bind:' + name);
+        if (dynamicValue != null) {
+            return dynamicValue;
+        }
+        else if (getStatic !== false) {
+            var staticValue = getAndRemoveAttr(el, name);
+            if (staticValue != null) {
+                return JSON.stringify(staticValue);
+            }
+        }
+    }
+    // TODO
+    function addHandler(el, name, value, range) {
+        var events = el.events || (el.events = {});
+        var newHandler = {
+            value: value.trim()
+        };
+        var handlers = events[name];
+        // TODO
+        if (Array.isArray(handlers)) {
+            handlers.push(newHandler);
+        }
+        else if (handlers) {
+            events[name] = [handlers, newHandler];
+        }
+        else {
+            events[name] = newHandler;
+        }
+        el.plain = false;
+    }
+    // TODO
+    function pluckModuleFunction(modules, key) {
+        return modules
+            ? modules.map(function (m) { return m[key]; }).filter(function (_) { return _; })
+            : [];
+    }
+    //# sourceMappingURL=helpers.js.map
+
+    var defaultTagRE = /\{\{((?:.|\r?\n)+?)\}\}/g;
+    function parseText(text, delimiters) {
+        // TODO
+        var tagRE = delimiters ? delimiters : defaultTagRE;
+        if (!tagRE.test(text)) {
+            return;
+        }
+        var tokens = [];
+        var rowTokens = [];
+        var lastIndex = tagRE.lastIndex = 0;
+        var match, index;
+        while ((match = tagRE.exec(text))) {
+            index = match.index;
+            // TODO
+            var exp = match[1].trim();
+            tokens.push("_s(" + exp + ")");
+            rowTokens.push({ '@binding': exp });
+            lastIndex = index + match[0].length;
+        }
+        // TODO
+        return {
+            expression: tokens.join('+'),
+            tokens: rowTokens
+        };
+    }
+    //# sourceMappingURL=text-parser.js.map
+
+    var onRE = /^@|^k-on:/;
+    // TODO
+    var dirRE = /^k-|^@|^:/;
+    var forAliasRE = /([\s\S]*?)\s+(?:in|of)\s+([\s\S]*)/;
+    var forIteratorRE = /,([^,\}\]]*)(?:,([^,\}\]]*))?$/;
+    var stripParensRE = /^\(|\)$/g;
+    var delimiters;
+    var transforms;
+    function createASTElement(tag, attrs, parent) {
+        return {
+            type: 1,
+            tag: tag,
+            attrsList: attrs,
+            attrsMap: makeAttrsMap(attrs),
+            // TODO
+            parent: parent,
+            children: []
+        };
+    }
+    /**
+     * 将 HTML string 转换成 AST。
+     * @param template
+     * @param options
+     */
+    function parse(template, options) {
+        transforms = pluckModuleFunction(options.modules, 'transformNode');
+        var stack = [];
+        var root;
+        var currentParent;
+        function closeElement(element) {
+            // console.log('element', element)
+            if (!element.processed) {
+                element = processElement(element, options);
+            }
+            if (currentParent && !element.forbidden) {
+                currentParent.children.push(element);
+                element.parent = currentParent;
+            }
+        }
+        parseHTML(template, Object.assign({}, options, {
+            start: function (tag, attrs, unary, start, end) {
+                var element = createASTElement(tag, attrs, currentParent);
+                if (!element.processed) {
+                    // 结构指令
+                    processFor(element);
+                    processIf(element);
+                }
+                if (!root) {
+                    root = element;
+                }
+                if (!unary) {
+                    currentParent = element;
+                    stack.push(element);
+                }
+            },
+            end: function (tag, start, end) {
+                var element = stack[stack.length - 1];
+                stack.length -= 1;
+                currentParent = stack[stack.length - 1];
+                closeElement(element);
+            },
+            chars: function (text, start, end) {
+                if (!currentParent) {
+                    return;
+                }
+                var children = currentParent.children;
+                if (text) {
+                    var res = void 0, child = void 0;
+                    if (text !== '' && (res = parseText(text, delimiters))) {
+                        child = {
+                            type: 2,
+                            expression: res.expression,
+                            tokens: res.tokens,
+                            text: text
+                        };
+                    }
+                    if (child) {
+                        children.push(child);
+                    }
+                }
+            }
+        }));
+        return root;
+    }
+    function makeAttrsMap(attrs) {
+        var map = {};
+        for (var i = 0, l = attrs.length; i < l; i++) {
+            // TODO
+            map[attrs[i].name] = attrs[i].value;
+        }
+        return map;
+    }
+    function processFor(el) {
+        var exp;
+        if ((exp = getAndRemoveAttr(el, 'k-for'))) {
+            var res = parseFor(exp);
+            if (res) {
+                extend(el, res);
+            }
+        }
+    }
+    function parseFor(exp) {
+        var inMatch = exp.match(forAliasRE);
+        if (!inMatch)
+            return;
+        var res = {};
+        res.for = inMatch[2].trim();
+        var alias = inMatch[1].trim().replace(stripParensRE, '');
+        var iteratorMatch = alias.match(forIteratorRE);
+        if (iteratorMatch) {
+            res.alias = alias.replace(forIteratorRE, '').trim();
+            res.iterator1 = iteratorMatch[1].trim();
+            if (iteratorMatch[2]) {
+                res.iterator2 = iteratorMatch[2].trim();
+            }
+        }
+        else {
+            res.alias = alias;
+        }
+        return res;
+    }
+    function processIf(el) {
+        var exp = getAndRemoveAttr(el, 'k-if');
+        if (exp) {
+            el.if = exp;
+            addIfCondition(el, {
+                exp: exp,
+                block: el
+            });
+        }
+        else {
+            if (getAndRemoveAttr(el, 'k-else') != null) {
+                el.else = true;
+            }
+            var elseif = getAndRemoveAttr(el, 'k-else-if');
+            if (elseif) {
+                el.elseif = elseif;
+            }
+        }
+    }
+    function addIfCondition(el, condition) {
+        if (!el.ifConditions) {
+            el.ifConditions = [];
+        }
+        el.ifConditions.push(condition);
+    }
+    function processElement(element, options) {
+        // TODO
+        for (var i = 0; i < transforms.length; i++) {
+            element = transforms[i](element, options) || element;
+        }
+        processAttrs(element);
+        return element;
+    }
+    function processAttrs(el) {
+        var list = el.attrsList;
+        var i, l, name, rawName, value;
+        for (i = 0, l = list.length; i < l; i++) {
+            name = rawName = list[i].name;
+            value = list[i].value;
+            if (dirRE.test(name)) {
+                el.hasBindings = true;
+                // 阻止冒泡 TODO
+                if (onRE.test(name)) {
+                    // k-on 
+                    name = name.replace(onRE, '');
+                    addHandler(el, name, value, list[i]);
+                }
+            }
+        }
+    }
+    //# sourceMappingURL=index.js.map
+
+    function genHandlers(events, isNative) {
+        var res = isNative ? 'nativeOn:{' : 'on:{';
+        for (var name_1 in events) {
+            res += "\"" + name_1 + "\":" + getHandler(name_1, events[name_1]) + ",";
+        }
+        return res.slice(0, -1) + '}';
+    }
+    var fnExpRE = /^\s*([\w$_]+|\([^)]*?\))\s*=>|^function\s*\(/;
+    var simplePathRE = /^\s*[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*|\['.*?']|\[".*?"]|\[\d+]|\[[A-Za-z_$][\w$]*])*\s*$/;
+    function getHandler(name, handler) {
+        if (!handler) {
+            return 'function(){}';
+        }
+        if (Array.isArray(handler)) {
+            return "[" + handler.map(function (handler) { return getHandler(name, handler); }).join(',') + "]";
+        }
+        var isMethodPath = simplePathRE.test(handler.value);
+        var isFunctionExpression = fnExpRE.test(handler.value);
+        if (!handler.modifiers) {
+            if (isMethodPath || isFunctionExpression) {
+                return handler.value;
+            }
+            return "function($event){" + handler.value + "}";
+        }
+    }
+    //# sourceMappingURL=events.js.map
+
+    var CodegenState = /** @class */ (function () {
+        function CodegenState(options) {
+            this.options = options;
+            this.dataGenFns = pluckModuleFunction(options.modules, 'genData');
+        }
+        return CodegenState;
+    }());
+    function generate(ast, options) {
+        var state = new CodegenState(options);
+        var code = ast ? genElement(ast, state) : '_c("dvi")';
+        return {
+            render: "with(this){return " + code + "}"
+        };
+    }
+    function genElement(el, state) {
+        if (el.for && !el.forProcessed) {
+            return genFor(el, state);
+        }
+        else if (el.if && !el.ifProcessed) {
+            return genIf(el, state);
+        }
+        else {
+            var code = void 0;
+            var data = genData(el, state);
+            var children = genChildren(el, state, true);
+            code = "_c('" + el.tag + "'" + (data ? "," + data : '' // data
+            ) + (children ? "," + children : '' // children
+            ) + ")";
+            return code;
+        }
+    }
+    function genIf(el, state) {
+        el.ifProcessed = true;
+        return genIfConditions(el.ifConditions.slice(), state);
+    }
+    function genIfConditions(conditions, state) {
+        if (!conditions.length) {
+            return '_e()';
+        }
+        var condition = conditions.shift();
+        if (condition.exp) {
+            return "(" + condition.exp + ")?" + genTernaryExp(condition.block) + ":" + genIfConditions(conditions, state);
+        }
+        else {
+            return "" + genTernaryExp(condition.block);
+        }
+        function genTernaryExp(el) {
+            // TODO
+            return genElement(el, state);
+        }
+    }
+    function genData(el, state) {
+        var data = '{';
+        // 模块数据生成方法
+        for (var i = 0; i < state.dataGenFns.length; i++) {
+            data += state.dataGenFns[i](el);
+        }
+        // event hanlders
+        if (el.events) {
+            data += genHandlers(el.events, false) + ",";
+        }
+        data = data.replace(/,$/, '') + '}';
+        return data;
+    }
+    function genChildren(el, state, checkSkip) {
+        var children = el.children;
+        if (children.length) {
+            var el_1 = children[0];
+            // TODO
+            if (children.length === 1 && el_1.for) {
+                var normalizationType_1 = checkSkip
+                    ? ",0" : "";
+                return "" + genElement(el_1, state) + normalizationType_1;
+            }
+            // TODOs
+            var normalizationType = getNormalizationType();
+            var gen_1 = genNode;
+            return "[" + children.map(function (c) { return gen_1(c, state); }).join(',') + "]" + (normalizationType ? "," + normalizationType : '');
+        }
+    }
+    function getNormalizationType(children, maybeComponent) {
+        // TODO
+        return 0;
+    }
+    function genNode(node, state) {
+        // TODO
+        if (node.type === 1) {
+            return genElement(node, state);
+        }
+        else {
+            return genText(node);
+        }
+    }
+    function genText(text) {
+        return "_v(" + (text.type === 2
+            ? text.expression
+            : JSON.stringify(text.text)) + ")";
+    }
+    function genFor(el, state) {
+        var exp = el.for;
+        var alias = el.alias;
+        var iterator1 = el.iterator1 ? "," + el.iterator1 : '';
+        var iterator2 = el.iterator2 ? "," + el.iterator2 : '';
+        el.forProcessed = true;
+        return "_l((" + exp + "),function(" + alias + iterator1 + iterator2 + "){" +
+            ("return " + genElement(el, state)) +
+            "})";
+    }
+    //# sourceMappingURL=index.js.map
+
+    function createFunction(code, errors) {
+        try {
+            return new Function(code);
+        }
+        catch (err) {
+            errors.push({ err: err, code: code });
+            return noop;
+        }
+    }
+    function createCompileToFunctionFn(compile) {
+        var cache = Object.create(null);
+        return function compileToFunctions(template, options, vm) {
+            options = extend({}, options);
+            var key = template;
+            if (cache[key]) {
+                return cache[key];
+            }
+            var compiled = compile(template, options);
+            var res = {};
+            var fnGenErrors = [];
+            res.render = createFunction(compiled.render, fnGenErrors);
+            return (cache[key] = res);
+        };
+    }
+    //# sourceMappingURL=to-function.js.map
+
+    function transformNode(el, options) {
+        var staticClass = getAndRemoveAttr(el, 'class');
+        if (staticClass) {
+            el.staticClass = JSON.stringify(staticClass);
+        }
+        var classBinding = getBindingAttr(el, 'class', false);
+        if (classBinding) {
+            el.classBinding = classBinding;
+        }
+    }
+    function genData$1(el) {
+        // class
+        var data = '';
+        if (el.staticClass) {
+            data += "staticClass:" + el.staticClass + ",";
+        }
+        if (el.classBinding) {
+            data += "class:" + el.classBinding + ",";
+        }
+        return data;
+    }
+    var klass = {
+        staticKeys: ['staticClass'],
+        transformNode: transformNode,
+        genData: genData$1
+    };
+    //# sourceMappingURL=class.js.map
+
+    var modules = [
+        klass
+    ];
+    //# sourceMappingURL=index.js.map
+
+    /********************************src/compiler/create-compiler***********************************/
+    function createCompilerCrerator(baseCompile) {
+        return function createCompiler(baseOptions) {
+            function compile(template, options) {
+                var finalOptions = Object.create(baseOptions);
+                var compiled = baseCompile(template.trim(), finalOptions);
+                return compiled;
+            }
+            return {
+                compile: compile,
+                compileToFunctions: createCompileToFunctionFn(compile)
+            };
+        };
+    }
+    /********************************src/compiler/index***********************************/
+    var createCompiler = createCompilerCrerator(function baseCompile(template, options) {
+        var ast = parse(template.trim(), options);
+        console.log('ast', ast);
+        var code = generate(ast, options);
+        return {
+            ast: ast,
+            render: code.render
+        };
+    });
+    /********************************platforms/web/compiler/index***********************************/
+    // TODO
+    var baseOptions = {
+        modules: modules
+    };
+    var _a = createCompiler(baseOptions), compileToFunctions = _a.compileToFunctions;
+    //# sourceMappingURL=index.js.map
 
     // @ts-nocheck
     function Kyue(options) {
@@ -1953,6 +2766,15 @@
         this._init(options);
     }
     Kyue.prototype.$mount = function (el, hydrating) {
+        // compile TODO
+        var options = this.$options;
+        if (!options.render) {
+            var template = options.template;
+            if (template) {
+                var render = compileToFunctions(template, {}).render;
+                options.render = render;
+            }
+        }
         el = el && query(el);
         return mountComponent(this, el, hydrating);
     };

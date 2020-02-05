@@ -53,8 +53,8 @@ log('message:', vm.message)
 
 
 var time = 1
-setInterval(() => {
-    time++
-    vm.message = 'Hello dhuang' + time
-    // vm.updateComponent()
-}, 1000)
+// setInterval(() => {
+//     time++
+//     vm.message = 'Hello dhuang' + time
+//     // vm.updateComponent()
+// }, 1000)

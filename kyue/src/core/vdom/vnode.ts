@@ -28,6 +28,12 @@ export default class VNode {
     }
 }
 
+export const createEmptyVNode = (text: string = '') => {
+    const node = new VNode()
+    node.text = text
+    return node
+}
+
 export function createTextVNode (val: string | number) {
     return new VNode(undefined, undefined, undefined, String(val))
 }

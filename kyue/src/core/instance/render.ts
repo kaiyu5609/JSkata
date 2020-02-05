@@ -1,6 +1,9 @@
 import { createElement } from '../vdom/create-element'
+import { installRenderHelpers } from '../render-helpers/index'
 
 export function renderMixin(Kyue: any) {
+
+    installRenderHelpers(Kyue.prototype)
 
     Kyue.prototype._render = function() {
         const vm = this
@@ -32,6 +35,7 @@ export function initRender(vm: any) {
     const options = vm.$options
     const parentVnode = vm.$vnode = options._parentVnode
 
+    vm._c = (a: any, b: any, c: any, d: any) => createElement(vm, a, b, c, d, false)
     vm.$createElement = (a: any, b: any, c: any, d: any) => createElement(vm, a, b, c, d, true)
 }
 

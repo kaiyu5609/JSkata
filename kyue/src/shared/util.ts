@@ -151,3 +151,7 @@ export function once (fn: Function): Function {
         }
     }
 }
+
+export const bind = function(fn: Function, ctx: any): Function {
+    return fn.bind(ctx)
+}

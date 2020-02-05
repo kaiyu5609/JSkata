@@ -1,4 +1,4 @@
-import { noop } from '../util/index'
+import { noop, bind } from '../util/index'
 import { observe } from '../observer/index'
 
 const sharedPropertyDefinition = {
@@ -25,6 +25,10 @@ export function initState(vm: any) {
 
     const opts = vm.$options
 
+    if (opts.methods) {
+        initMethods(vm, opts.methods)
+    }
+    
     if (opts.data) {
         initData(vm)
     }
@@ -58,5 +62,12 @@ export function getData(data: Function, vm: any): any {
         return {}
     } finally {
 
+    }
+}
+
+function initMethods(vm: any, methods: any) {
+
+    for (const key in methods) {
+        vm[key] = typeof methods[key] !== 'function' ? noop : bind(methods[key], vm)
     }
 }

@@ -6,6 +6,14 @@ import { lifecycleMixin, mountComponent } from './lifecycle'
 import { renderMixin } from './render'
 import { patch } from '../vdom/patch'
 
+/**
+ * compile
+ * TODO
+ */
+import { compileToFunctions } from '../../compiler/index'
+
+
+
 function Kyue(options: any) {
     if (process.env.NODE_ENV !== 'production' && !(this instanceof Kyue)) {
         warn('Kyue is a constructor and should be called with the `new` keyword')
@@ -15,8 +23,31 @@ function Kyue(options: any) {
 }
 
 Kyue.prototype.$mount = function(el?: string | Element, hydrating?: boolean) {
-    el = el && query(el)
+    // compile TODO
+    const options = this.$options
+    
+    if (!options.render) {
+        let template = options.template
 
+        if (template) {
+            // TODO
+
+
+        } else if (el) {
+            // TODO
+            // template = getOuterHTML(el)
+        }
+
+        if (template) {
+            const { render } = compileToFunctions(template, {
+
+            })
+            options.render = render
+        }
+    }
+    
+
+    el = el && query(el)
     return mountComponent(this, el, hydrating)
 }
 

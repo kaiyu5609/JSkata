@@ -1,5 +1,8 @@
 import VNode from './vnode'
 import { isPrimitive, isDef, isTrue, isUndef } from '../util/index'
+import events from '../../runtime/modules/events'
+
+export const emptyNode = new VNode('', {}, [])
 
 
 function emptyNodeAt(elm: Element) {
@@ -30,14 +33,13 @@ function createElm(vnode: any, insertedVnodeQueue: [], parentElm?: Element, refE
     const tag = vnode.tag
 
     if (isDef(tag)) {
-        vnode.elm = vnode.ns
-            ? document.createElementNS(vnode.ns, tag)
-            : document.createElement(tag, vnode)
+        vnode.elm = document.createElement(tag)
     
         createChildren(vnode, children, insertedVnodeQueue)
     
         if (data) {
-            setData(vnode, data);
+            setData(vnode, data)
+            invokeCreateHooks(vnode, insertedVnodeQueue)
         }
 
         insert(parentElm, vnode.elm, refElm)
@@ -126,7 +128,12 @@ function removeNode(el: Element) {
 
 
 
-
+function isPatchable(vnode: any) {
+    while (vnode.componentInstance) {
+        vnode = vnode.componentInstance._vnode
+    }
+    return isDef(vnode.tag)
+}
 
 function updateChildren(parentElm: Element, oldCh: any, newCh: any, insertedVnodeQueue: [], removeOnly?: boolean) {
     let oldStartIdx = 0
@@ -141,6 +148,10 @@ function updateChildren(parentElm: Element, oldCh: any, newCh: any, insertedVnod
 
     let refElm
 
+    /**
+     * TODO
+     * 删掉
+     */
     let index = 0
     const COUNT = 100
 
@@ -150,7 +161,7 @@ function updateChildren(parentElm: Element, oldCh: any, newCh: any, insertedVnod
         index++
 
         if (index > COUNT) {
-            break;
+            break
         }
 
         if (isUndef(oldStartVnode)) {
@@ -224,6 +235,13 @@ function patchVnode(
      * 执行update的钩子函数
      * TODO
      */
+
+    // 事件从新绑定
+    if (isDef(data) && isPatchable(vnode)) {
+        setTimeout(() => {
+            events.update(oldVnode, vnode)
+        }, 10)
+    }
     /*******************************/
 
 
@@ -251,6 +269,10 @@ function patchVnode(
     if (isDef(data)) {
         if (isDef(i = data.hook) && isDef(i = i.postpatch)) i(oldVnode, vnode)
     }
+}
+
+function invokeCreateHooks(vnode: any, insertedVnodeQueue: []) {
+    events.create(emptyNode, vnode)
 }
 
 
